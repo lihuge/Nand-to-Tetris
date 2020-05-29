@@ -32,6 +32,7 @@ POINTER_ADDRESS = 3
 
 COMPARISION_LOOP_SYMBOL =  'COMPARISION_LOOP_'
 END_COMPARISION_LOOP_SYMBOL = 'END_COMPARISION_LOOP_'
+RETURN_LABEL_SYMBOL = '$ret.'
 
 SEGMENT_DICTIONARY = {'local': LOCAL_ADDRESS, 'argument': ARGUMENT_ADDRESS,
                      'this':THIS_ADDRESS, 'that':THAT_ADDRESS,
@@ -43,6 +44,15 @@ class CodeWriter:
             self.outputFile = open(fileName + DOT + ASM_EXTENSION, "w")
             self.fileName = fileName.split(BACK_SLASH)[-1]
             self.comparisionsCounter = 0
+            self.returnLabelCounter = 0
+            self.__initializeProgram()
+
+    def __initializeProgram(self):
+        self.__writeLine('@256')
+        self.__writeLine('D=A')
+        self.__writeLine('@SP')
+        self.__writeLine('M=D')
+        self.writeCall('Sys.init', 0)
 
     def __writeLine(self, line):
         self.outputFile.write(line + '\n')
@@ -93,6 +103,35 @@ class CodeWriter:
             self.__writeLine('M=0')
             self.__writeLine('A=A+1')
 
+    def writeCall(self, functionName, nArgs):
+        self.__writeLine('@' + functionName + RETURN_LABEL_SYMBOL + str(self.returnLabelCounter))   
+        self.__writeLine('D=A')
+        self.__putDIntoStackTop()
+        self.__incrementSP()
+        self.__pushValueForSegmentPointer(LOCAL_ADDRESS)
+        self.__pushValueForSegmentPointer(ARGUMENT_ADDRESS)
+        self.__pushValueForSegmentPointer(THIS_ADDRESS)
+        self.__pushValueForSegmentPointer(THAT_ADDRESS)
+        self.__putIndexInD(nArgs + 5)
+        self.__writeLine('@SP')
+        self.__writeLine('D=M-D')
+        self.__writeLine('@' + ARGUMENT_ADDRESS)
+        self.__writeLine('M=D')
+        self.__writeLine('@SP')
+        self.__writeLine('D=M')
+        self.__writeLine('@' + LOCAL_ADDRESS)
+        self.__writeLine('M=D')
+        self.writeGoto(functionName)
+        self.writeLabel(functionName + RETURN_LABEL_SYMBOL + str(self.returnLabelCounter))
+        self.returnLabelCounter += 1
+        
+    def __pushValueForSegmentPointer(self, segmentSymbol):
+        self.__writeLine('@' + segmentSymbol)
+        self.__writeLine('D=M')
+        self.__putDIntoStackTop()
+        self.__incrementSP()
+
+
     def restoreValueForSegmentPointer(self, segmentSymbol, distanceFromLCL):
         self.__writeLine('@' + distanceFromLCL)
         self.__writeLine('D=A')
@@ -106,7 +145,7 @@ class CodeWriter:
         # save original LCL
         self.__writeLine('@LCL')
         self.__writeLine('D=M')
-        self.__writeLine('@14')
+        self.__writeLine('@R14')
         self.__writeLine('M=D')
 
     def __saveRetAddressToR15(self):
@@ -156,6 +195,9 @@ class CodeWriter:
         self.__putStackTopIntoA()
         self.__dealWithArithmetic(command)
         self.__incrementSP()
+
+    
+
 
     # sets the address for the segment and the index for temp,pointer,static and constant cases
     def __setAddressForSegment(self, segment, index):

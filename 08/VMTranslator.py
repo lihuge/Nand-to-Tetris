@@ -78,7 +78,11 @@ def parseCommandsAndWriteOutput():
             codeWriter.writeFunction(functionName, numberOfVars)
         elif (instructionType == Command_Type.C_RETURN):
             codeWriter.writeReturn()
-    codeWriter.close()
+        elif (instructionType == Command_Type.C_CALL):
+            functionName = parser.arg1()
+            numberOfArgs = int(parser.arg2())
+            codeWriter.writeCall(functionName, numberOfArgs)
+    
 
 fileName = checkInput()
 if (fileName != None): # this case handles single file
@@ -97,7 +101,14 @@ else:
     try: # this case handles a directory
         fileName = pathName.split(BACK_SLASH)[-1]
         codeWriter = CodeWriter(pathName + BACK_SLASH + fileName)
-        #parseCommandsAndWriteOutput()
+        for root, dirs, files in os.walk(pathName):
+            for fileInFolder in files:
+                checkExtension = fileInFolder.split(DOT)[-1]
+                if checkExtension == VM_EXTENSION:
+                    parser = Parser(pathName + BACK_SLASH + fileInFolder)
+                    codeWriter.setFileName(fileInFolder.split(DOT)[0])
+                    parseCommandsAndWriteOutput()
+            codeWriter.close()
     except IOError:
         print(FILE_WRITE_ERROR)
         sys.exit()
