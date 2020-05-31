@@ -1,3 +1,5 @@
+from enum import Enum
+
 COMMENT_SYMBOL = '//'
 PUSH_BEGINNING = 'push'
 POP_BEGINNING = 'pop'
@@ -21,12 +23,11 @@ EMPTY_STRING = ''
 EQUAL_SIGN = '='
 SEMICOLON_SIGN = ';'
 ARITHMETIC_LIST = {ADD_BEGINNING, SUBSTRACT_BEGINNING, NEG_BEGINNING,
-                    EQUALIZER_BEGINNING, GREATERTHAN_BEGINNING, LOWERTHAN_BEGINNING,
-                    AND_BEGINNING, OR_BEGINNING, NOT_BEGINNING}
+                   EQUALIZER_BEGINNING, GREATERTHAN_BEGINNING, LOWERTHAN_BEGINNING,
+                   AND_BEGINNING, OR_BEGINNING, NOT_BEGINNING}
 
 
-from enum import Enum
-class Command_Type(Enum):
+class CommandType(Enum):
     C_ARITHMETIC = 1
     C_PUSH = 2
     C_POP = 3
@@ -39,52 +40,53 @@ class Command_Type(Enum):
 
 
 class Parser:
-    def __init__(self, fileName):
+
+    def __init__(self, file_name):
         self.nextLine = 0
         self.linesArray = []
-        with open(fileName) as vmFile:
+        with open(file_name) as vmFile:
             for line in vmFile:
                 # cleaning up line
                 line = line.strip().split(COMMENT_SYMBOL)[0]
-                if (line):
+                if line:
                     self.linesArray.append(line)
 
-    def hasMoreLines(self):
-        if (len(self.linesArray) > self.nextLine):
+    def has_more_lines(self):
+        if len(self.linesArray) > self.nextLine:
             return True
         else:
             return False
 
     def advance(self):
-        self.currentCommand = self.linesArray[self.nextLine]
+        self.current_command = self.linesArray[self.nextLine]
         self.nextLine += 1
 
-    def instructionType(self):
-        if (self.currentCommand.startswith(tuple(ARITHMETIC_LIST))):
-            return Command_Type.C_ARITHMETIC
-        elif (self.currentCommand.startswith(PUSH_BEGINNING)):
-            return Command_Type.C_PUSH
-        elif (self.currentCommand.startswith(POP_BEGINNING)):
-            return Command_Type.C_POP
-        elif (self.currentCommand.startswith(LABEL_BEGINNING)):
-            return Command_Type.C_LABEL
-        elif (self.currentCommand.startswith(GOTO_BEGINNING)):
-            return Command_Type.C_GOTO
-        elif (self.currentCommand.startswith(IFGOTO_BEGINNING)):
-            return Command_Type.C_IF
-        elif (self.currentCommand.startswith(FUNCTION_BEGINNING)):
-            return Command_Type.C_FUNCTION
-        elif (self.currentCommand.startswith(RETURN_BEGINNING)):
-            return Command_Type.C_RETURN
-        elif (self.currentCommand.startswith(CALL_BEGINNING)):
-            return Command_Type.C_CALL
+    def instruction_type(self):
+        if self.current_command.startswith(tuple(ARITHMETIC_LIST)):
+            return CommandType.C_ARITHMETIC
+        elif self.current_command.startswith(PUSH_BEGINNING):
+            return CommandType.C_PUSH
+        elif self.current_command.startswith(POP_BEGINNING):
+            return CommandType.C_POP
+        elif self.current_command.startswith(LABEL_BEGINNING):
+            return CommandType.C_LABEL
+        elif self.current_command.startswith(GOTO_BEGINNING):
+            return CommandType.C_GOTO
+        elif self.current_command.startswith(IFGOTO_BEGINNING):
+            return CommandType.C_IF
+        elif self.current_command.startswith(FUNCTION_BEGINNING):
+            return CommandType.C_FUNCTION
+        elif self.current_command.startswith(RETURN_BEGINNING):
+            return CommandType.C_RETURN
+        elif self.current_command.startswith(CALL_BEGINNING):
+            return CommandType.C_CALL
 
     def arg1(self):
-        if (self.instructionType() == Command_Type.C_ARITHMETIC):
-            return self.currentCommand
+        if self.instruction_type() == CommandType.C_ARITHMETIC:
+            return self.current_command
         else:
-            return self.currentCommand.split(WHITE_SPACE)[1]
+            return self.current_command.split(WHITE_SPACE)[1]
 
     # returns dest part
     def arg2(self):
-        return self.currentCommand.split(WHITE_SPACE)[2]
+        return self.current_command.split(WHITE_SPACE)[2]

@@ -1,4 +1,4 @@
-from Parser import Command_Type
+from Parser import CommandType
 
 ASM_EXTENSION = 'asm'
 DOT = '.'
@@ -30,271 +30,379 @@ THAT_ADDRESS = 'THAT'
 TEMP_ADDRESS = 5
 POINTER_ADDRESS = 3
 
-COMPARISION_LOOP_SYMBOL =  'COMPARISION_LOOP_'
+COMPARISION_LOOP_SYMBOL = 'COMPARISION_LOOP_'
 END_COMPARISION_LOOP_SYMBOL = 'END_COMPARISION_LOOP_'
 RETURN_LABEL_SYMBOL = '$ret.'
 
 SEGMENT_DICTIONARY = {'local': LOCAL_ADDRESS, 'argument': ARGUMENT_ADDRESS,
-                     'this':THIS_ADDRESS, 'that':THAT_ADDRESS,
-                     'temp':TEMP_ADDRESS, 'static':STATIC_ADDRESS, 'pointer':POINTER_ADDRESS}
+                      'this': THIS_ADDRESS, 'that': THAT_ADDRESS,
+                      'temp': TEMP_ADDRESS, 'static': STATIC_ADDRESS, 'pointer': POINTER_ADDRESS}
 
 
 class CodeWriter:
-    def __init__(self, fileName):
-            self.outputFile = open(fileName + DOT + ASM_EXTENSION, "w")
-            self.fileName = fileName.split(BACK_SLASH)[-1]
-            self.comparisionsCounter = 0
-            self.returnLabelCounter = 0
-            self.__initializeProgram()
+    return_label_counter = 0
+    def __init__(self, file_name):
+        self.output_file = open(file_name + DOT + ASM_EXTENSION, "w")
+        self.file_name = file_name.split(BACK_SLASH)[-1]
+        self.comparisons_counter = 0
+        #self.return_label_counter = 0
+        self.__initialize_program()
 
-    def __initializeProgram(self):
-        self.__writeLine('@256')
-        self.__writeLine('D=A')
-        self.__writeLine('@SP')
-        self.__writeLine('M=D')
-        self.writeCall('Sys.init', 0)
+    def __initialize_program(self):
+        self.__write_line('@256')
+        self.__write_line('D=A')
+        self.__write_line('@SP')
+        self.__write_line('M=D')
+        self.write_call('Sys.init', 0)
 
-    def __writeLine(self, line):
-        self.outputFile.write(line + '\n')
+    def __write_line(self, line):
+        self.output_file.write(line + '\n')
 
-    def __dealWithArithmetic(self, command):
-        if (command == ADD):
-            self.__writeLine('M=D+M')
-        elif (command == SUBSTRACT):
-            self.__writeLine('M=M-D')
-        elif (command == NEG):
-            self.__writeLine('M=-M')
-        elif (command in [EQUALIZER, GREATERTHAN, LOWERTHAN]):
-            self.comparisionsCounter += 1
-            self.__writeLine('D=M-D')
-            self.__writeLine('@' + COMPARISION_LOOP_SYMBOL + str(self.comparisionsCounter))
-            if (command == EQUALIZER):
-                self.__writeLine('D;JEQ')
-            elif (command == GREATERTHAN):
-                self.__writeLine('D;JGT')
+    def __deal_with_arithmetic(self, command):
+        if command == ADD:
+            self.__write_line('M=D+M')
+        elif command == SUBSTRACT:
+            self.__write_line('M=M-D')
+        elif command == NEG:
+            self.__write_line('M=-M')
+        elif command in [EQUALIZER, GREATERTHAN, LOWERTHAN]:
+            self.comparisons_counter += 1
+            self.__write_line('D=M-D')
+            self.__write_line('@' + COMPARISION_LOOP_SYMBOL + str(self.comparisons_counter))
+            if command == EQUALIZER:
+                self.__write_line('D;JEQ')
+            elif command == GREATERTHAN:
+                self.__write_line('D;JGT')
             else:
-                self.__writeLine('D;JLT')
-            self.__handleComparisionJumps()
-        elif (command == AND):
-            self.__writeLine('M=M&D')
-        elif (command == OR):
-            self.__writeLine('M=M|D')
+                self.__write_line('D;JLT')
+            self.__handle_comparision_jumps()
+        elif command == AND:
+            self.__write_line('M=M&D')
+        elif command == OR:
+            self.__write_line('M=M|D')
         else:
-            self.__writeLine('M=!M')
+            self.__write_line('M=!M')
 
-    def writeLabel(self, label):
-        self.__writeLine('({})'.format(label))
+    def write_label(self, label):
+        self.__write_line('({})'.format(label))
 
-    def writeGoto(self, label):
-        self.__writeLine('@' + label)
-        self.__writeLine('0;JMP')
+    def write_goto(self, label):
+        self.__write_line('@' + label)
+        self.__write_line('0;JMP')
 
-    def writeIf(self, label):
-        self.__putStackTopIntoA()
-        self.__writeLine('D=M')
-        self.__writeLine('@' + label)
-        self.__writeLine('D;JNE')
+    def write_if(self, label):
+        self.__put_stack_top_into_A()
+        self.__write_line('D=M')
+        self.__write_line('@' + label)
+        self.__write_line('D;JNE')
 
-    def writeFunction(self, functionName, nVars):
-        self.writeLabel(functionName)
-        self.__writeLine('@LCL')
-        self.__writeLine('A=M')
-        for _ in range(nVars):
-            self.__writeLine('M=0')
-            self.__writeLine('A=A+1')
+    def write_function(self, function_name, n_vars):
+        self.write_label(function_name)
+        if (n_vars > 0):
+            self.__write_line('@LCL')
+            self.__write_line('D=M')
+            self.__write_line('@SP')
+            self.__write_line('M=D')
+            #self.__write_line('A=M')
+        for _ in range(n_vars):
+            self.__write_line('A=M')
+            self.__write_line('M=0')
+            self.__increment_SP()
+            #self.__write_line('A=A+1')
+            #self.__increment_SP()
+            #self._from_stack_to_memory_transporter('LCL', str(var))
+                #if (i < nVars - 1): 
+                #    self.__writeLine('A=A+1')
+            """self.__write_line('@LCL')
+        self.__write_line('A=M')
+        # Initialize the local variables of the callee
+        for var in range(n_vars):
+            self.__write_line('M=0')
+            self.__write_line('A=A+1')
+            self._from_stack_to_memory_transporter('LCL', str(var))"""
 
-    def writeCall(self, functionName, nArgs):
-        self.__writeLine('@' + functionName + RETURN_LABEL_SYMBOL + str(self.returnLabelCounter))   
-        self.__writeLine('D=A')
-        self.__putDIntoStackTop()
-        self.__incrementSP()
-        self.__pushValueForSegmentPointer(LOCAL_ADDRESS)
-        self.__pushValueForSegmentPointer(ARGUMENT_ADDRESS)
-        self.__pushValueForSegmentPointer(THIS_ADDRESS)
-        self.__pushValueForSegmentPointer(THAT_ADDRESS)
-        self.__putIndexInD(nArgs + 5)
-        self.__writeLine('@SP')
-        self.__writeLine('D=M-D')
-        self.__writeLine('@' + ARGUMENT_ADDRESS)
-        self.__writeLine('M=D')
-        self.__writeLine('@SP')
-        self.__writeLine('D=M')
-        self.__writeLine('@' + LOCAL_ADDRESS)
-        self.__writeLine('M=D')
-        self.writeGoto(functionName)
-        self.writeLabel(functionName + RETURN_LABEL_SYMBOL + str(self.returnLabelCounter))
-        self.returnLabelCounter += 1
-        
-    def __pushValueForSegmentPointer(self, segmentSymbol):
-        self.__writeLine('@' + segmentSymbol)
-        self.__writeLine('D=M')
-        self.__putDIntoStackTop()
-        self.__incrementSP()
+    def write_call(self, function_name, n_args):
+        self.__write_line('@' + function_name + RETURN_LABEL_SYMBOL + str(self.return_label_counter))
+        self.__write_line('D=A')
+        self.__put_D_into_stack_top()  # Store return address (caller) in stack
+        self.__increment_SP()
+        self.__push_value_for_segment_pointer(LOCAL_ADDRESS)
+        self.__push_value_for_segment_pointer(ARGUMENT_ADDRESS)
+        self.__push_value_for_segment_pointer(THIS_ADDRESS)
+        self.__push_value_for_segment_pointer(THAT_ADDRESS)
+        self.__put_index_in_D(n_args + 5)
+        self.__write_line('@SP')
+        self.__write_line('D=M-D')
+        self.__write_line('@' + ARGUMENT_ADDRESS)
+        self.__write_line('M=D')
+        self.__write_line('@SP')
+        self.__write_line('D=M')
+        self.__write_line('@' + LOCAL_ADDRESS)
+        self.__write_line('M=D')
+        self.write_goto(function_name)
+        self.write_label(function_name + RETURN_LABEL_SYMBOL + str(self.return_label_counter))
+        self.return_label_counter += 1
 
 
-    def restoreValueForSegmentPointer(self, segmentSymbol, distanceFromLCL):
-        self.__writeLine('@' + distanceFromLCL)
-        self.__writeLine('D=A')
-        self.__writeLine('@R14')
-        self.__writeLine('A=M-D')
-        self.__writeLine('D=M')
-        self.__writeLine('@' + segmentSymbol)
-        self.__writeLine('M=D')
-    
-    def __saveLCLtoR14(self):
+    def __push_value_for_segment_pointer(self, segment_symbol):
+        self.__write_line('@' + segment_symbol)
+        self.__write_line('D=M')
+        self.__put_D_into_stack_top()
+        self.__increment_SP()
+
+    def restore_value_for_segment_pointer(self, segment_symbol, distance_from_lcl):
+        self.__write_line('@' + distance_from_lcl)
+        self.__write_line('D=A')
+        self.__write_line('@R14')
+        self.__write_line('A=M-D')
+        self.__write_line('D=M')
+        self.__write_line('@' + segment_symbol)
+        self.__write_line('M=D')
+
+    def __save_LCL_to_R14(self):
         # save original LCL
-        self.__writeLine('@LCL')
-        self.__writeLine('D=M')
-        self.__writeLine('@R14')
-        self.__writeLine('M=D')
+        self.__write_line('@LCL')
+        self.__write_line('D=M')
+        self.__write_line('@R14')
+        self.__write_line('M=D')
 
-    def __saveRetAddressToR15(self):
-        self.__writeLine('@5')
-        self.__writeLine('D=A')
-        self.__writeLine('@R14')
-        self.__writeLine('D=M-D')
-        self.__writeLine('A=D')
-        self.__writeLine('D=M')
-        self.__writeLine('@R15')
-        self.__writeLine('M=D')
+    def __save_ret_address_to_R15(self):
+        self.__write_line('@5')
+        self.__write_line('D=A')
+        self.__write_line('@R14')
+        self.__write_line('D=M-D')
+        self.__write_line('A=D')
+        self.__write_line('D=M')
+        self.__write_line('@R15')
+        self.__write_line('M=D')
 
-    def __setARGToD(self):
-        self.__writeLine('@ARG')
-        self.__writeLine('A=M')
-        self.__writeLine('M=D')
+    def __set_ARG_to_D(self):
+        self.__write_line('@ARG')
+        self.__write_line('A=M')
+        self.__write_line('M=D')
 
-    def __setSPToARGPlusOne(self):
-        self.__writeLine('@ARG')
-        self.__writeLine('D=M+1')
-        self.__writeLine('@SP')
-        self.__writeLine('M=D')
-    
-    def __jumpToReturnAddress(self):
-        self.__writeLine('@R15')
-        self.__writeLine('A=M')
-        self.__writeLine('0;JMP')
+    def __set_SP_to_ARG_plus_one(self):
+        self.__write_line('@ARG')
+        self.__write_line('D=M+1')
+        self.__write_line('@SP')
+        self.__write_line('M=D')
 
-    def writeReturn(self):
-        self.__saveLCLtoR14()
-        self.__saveRetAddressToR15()
-        self.__putStackTopToD()
-        self.__setARGToD()
-        self.__setSPToARGPlusOne()
-        self.restoreValueForSegmentPointer(THAT_ADDRESS, '1')
-        self.restoreValueForSegmentPointer(THIS_ADDRESS, '2')
-        self.restoreValueForSegmentPointer(ARGUMENT_ADDRESS, '3')
-        self.restoreValueForSegmentPointer(LOCAL_ADDRESS, '4')
-        self.__jumpToReturnAddress()
+    def __jump_to_return_address(self):
+        self.__write_line('@R15')
+        self.__write_line('A=M')
+        self.__write_line('0;JMP')
 
-    def setFileName(self, fileName):
-        self.fileName = fileName.split(BACK_SLASH)[-1]
+    def write_return(self):
+        self.__save_LCL_to_R14()
+        self.__save_ret_address_to_R15()
+        self.__put_stack_top_to_D()
+        self.__set_ARG_to_D()
+        self.__set_SP_to_ARG_plus_one()
+        self.restore_value_for_segment_pointer(THAT_ADDRESS, '1')
+        self.restore_value_for_segment_pointer(THIS_ADDRESS, '2')
+        self.restore_value_for_segment_pointer(ARGUMENT_ADDRESS, '3')
+        self.restore_value_for_segment_pointer(LOCAL_ADDRESS, '4')
+        self.__jump_to_return_address()
 
-    def writeArithmetic(self, command):
-        if (command not in [NEG, NOT]):
-            self.__putStackTopToD()
-        self.__putStackTopIntoA()
-        self.__dealWithArithmetic(command)
-        self.__incrementSP()
+    def set_file_name(self, fileName):
+        self.file_name = fileName.split(BACK_SLASH)[-1]
 
-    
-
+    def write_arithmetic(self, command):
+        if command not in [NEG, NOT]:
+            self.__put_stack_top_to_D()
+        self.__put_stack_top_into_A()
+        self.__deal_with_arithmetic(command)
+        self.__increment_SP()
 
     # sets the address for the segment and the index for temp,pointer,static and constant cases
-    def __setAddressForSegment(self, segment, index):
-        if (segment in [SEGMENT_TEMP, SEGMENT_POINTER]):
+    def __set_address_for_segment(self, segment, index):
+        if segment in [SEGMENT_TEMP, SEGMENT_POINTER]:
             address = '@R' + str(SEGMENT_DICTIONARY[segment] + index)
-        elif (segment == SEGMENT_STATIC):
-            address = '@' + self.fileName + DOT + str(index)
-        elif (segment != SEGMENT_CONSTANT):
+        elif segment == SEGMENT_STATIC:
+            address = '@' + self.file_name + DOT + str(index)
+        elif segment != SEGMENT_CONSTANT:
             address = '@' + SEGMENT_DICTIONARY[segment]
         else:
             address = ''
         return address
 
-    def writePushPop(self, command, segment, index):
-        address = self.__setAddressForSegment(segment, index) 
-        if (command == Command_Type.C_POP):
-            if (segment in [SEGMENT_TEMP, SEGMENT_POINTER, SEGMENT_STATIC]):
-                self.__putStackTopToD()
-                self.__writeLine(address)
-                self.__writeLine('M=D')
+    def write_push_pop(self, command, segment, index):
+        address = self.__set_address_for_segment(segment, index)
+        if command == CommandType.C_POP:
+            if segment in [SEGMENT_TEMP, SEGMENT_POINTER, SEGMENT_STATIC]:
+                self.__put_stack_top_to_D()
+                self.__write_line(address)
+                self.__write_line('M=D')
             else:
-                self.__putIndexInD(index)
-                self.__saveAddressWithIndexIntoTemp(address)
-                self.__putStackTopToD()
-                self.__putDInAddressOfTemp()
-        elif (command == Command_Type.C_PUSH):
-            if (segment in [SEGMENT_TEMP, SEGMENT_POINTER, SEGMENT_STATIC]):
-                self.__writeLine(address)
-                self.__writeLine('D=M')
+                self.__put_index_in_D(index)
+                self.__save_address_with_index_into_temp(address)
+                self.__put_stack_top_to_D()
+                self.__put_D_in_address_of_temp()
+        elif command == CommandType.C_PUSH:
+            if segment in [SEGMENT_TEMP, SEGMENT_POINTER, SEGMENT_STATIC]:
+                self.__write_line(address)
+                self.__write_line('D=M')
             else:
-                self.__putIndexInD(index)
-                if (segment != SEGMENT_CONSTANT):
-                    self.__writeLine(address)
-                    self.__writeLine('A=M+D')
-                    self.__writeLine('D=M')
-            self.__putDIntoStackTop()
-            self.__incrementSP()
+                self.__put_index_in_D(index)
+                if segment != SEGMENT_CONSTANT:
+                    self.__write_line(address)
+                    self.__write_line('A=M+D')
+                    self.__write_line('D=M')
+            self.__put_D_into_stack_top()
+            self.__increment_SP()
 
     """ handling comparision situation where a new symbol need to be used to distinguish between
         the situation where the comparision return true and false, we do that by creating labels
         jumping between them """
-    def __handleComparisionJumps(self):
-        self.__writeLine('@SP')
-        self.__writeLine('A=M')
-        self.__writeLine('M=0')
-        self.__writeLine('@' + END_COMPARISION_LOOP_SYMBOL + str(self.comparisionsCounter))
-        self.__writeLine('0;JMP')
-        self.__writeLine('(' + COMPARISION_LOOP_SYMBOL + str(self.comparisionsCounter) + ')')
-        self.__writeLine('@SP')
-        self.__writeLine('A=M')
-        self.__writeLine('M=-1')
-        self.__writeLine('(' + END_COMPARISION_LOOP_SYMBOL + str(self.comparisionsCounter) + ')')               
 
-    def __incrementSP(self):
-        self.__writeLine('@SP')
-        self.__writeLine('M=M+1')
-    
-    def __decrementSP(self):
-        self.__writeLine('@SP')
-        self.__writeLine('M=M-1')  
-       
-    def __putIndexInD(self, index):
-        self.__writeLine('@' + str(index))
-        self.__writeLine('D=A')
+    def __handle_comparision_jumps(self):
+        self.__write_line('@SP')
+        self.__write_line('A=M')
+        self.__write_line('M=0')
+        self.__write_line('@' + END_COMPARISION_LOOP_SYMBOL + str(self.comparisons_counter))
+        self.__write_line('0;JMP')
+        self.__write_line('(' + COMPARISION_LOOP_SYMBOL + str(self.comparisons_counter) + ')')
+        self.__write_line('@SP')
+        self.__write_line('A=M')
+        self.__write_line('M=-1')
+        self.__write_line('(' + END_COMPARISION_LOOP_SYMBOL + str(self.comparisons_counter) + ')')
 
-    def __putDIntoStackTop(self):
-        self.__writeLine('@SP')
-        self.__writeLine('A=M')
-        self.__writeLine('M=D')
+    def __increment_SP(self):
+        self.__write_line('@SP')
+        self.__write_line('M=M+1')
+
+    def __decrement_SP(self):
+        self.__write_line('@SP')
+        self.__write_line('M=M-1')
+
+    def __put_index_in_D(self, index):
+        self.__write_line('@' + str(index))
+        self.__write_line('D=A')
+
+    def __put_D_into_stack_top(self):
+        self.__write_line('@SP')
+        self.__write_line('A=M')
+        self.__write_line('M=D')
 
     # dealing with a situation where we need to use a temp memory address in order to do operation on 2 variables
-    def __saveAddressWithIndexIntoTemp(self, address):
-        self.__writeLine(address)
-        self.__writeLine('D=M+D')
-        self.__writeLine('@R13')
-        self.__writeLine('M=D')
+    def __save_address_with_index_into_temp(self, address):
+        self.__write_line(address)
+        self.__write_line('D=M+D')
+        self.__write_line('@R13')
+        self.__write_line('M=D')
 
     # taking the data out of temp memory address used before in order to complete the operation on 2 variables
-    def __putDInAddressOfTemp(self):
-        self.__writeLine('@R13')
-        self.__writeLine('A=M')
-        self.__writeLine('M=D')
+    def __put_D_in_address_of_temp(self):
+        self.__write_line('@R13')
+        self.__write_line('A=M')
+        self.__write_line('M=D')
 
-    def __putStackTopToD(self):
-        self.__putStackTopIntoA()
-        self.__writeLine('D=M')
+    def __put_stack_top_to_D(self):
+        self.__put_stack_top_into_A()
+        self.__write_line('D=M')
 
-    def __putStackTopIntoA(self):
-        self.__decrementSP()
-        self.__writeLine('A=M')
-
-    
+    def __put_stack_top_into_A(self):
+        self.__decrement_SP()
+        self.__write_line('A=M')
 
     def close(self):
-        self.outputFile.close()
+        self.output_file.close()
 
+    """def write_call(self,func_name, num_args):
+        return_address = "return$"+str(self.return_label_counter)
+        push_code = "@SP\n" \
+               "A=M\n" \
+               "M=D\n" \
+               "@SP\n" \
+               "M=M+1\n"
+        code = "@{0}\n" \
+                "D=A\n".format(return_address) \
+                +push_code+ \
+               "@LCL\n" \
+               "D=M\n" \
+                +push_code+ \
+               "@ARG\n" \
+               "D=M\n" \
+               +push_code+ \
+               "@THIS\n" \
+               "D=M\n" \
+               +push_code+ \
+               "@THAT\n" \
+               "D=M\n" \
+               +push_code+ \
+               "@{0}\n" \
+               "D=A\n" \
+               "@5\n" \
+               "D=D+A\n" \
+               "@SP\n" \
+               "D=M-D\n" \
+               "@ARG\n" \
+               "M=D\n" \
+               "@SP\n" \
+               "D=M\n" \
+               "@LCL\n" \
+               "M=D\n" \
+               "@{1}\n" \
+               "0;JMP\n".format(num_args,func_name)
+        self.output_file.write(code)
+        self.write_label(return_address)
+        self.return_label_counter += 1
 
+    def write_function(self,func_name, num_locals):
+        
+        self.current_function = func_name
+        self.write_label(self.current_function)
+        for i in range(num_locals):
+            self.write_push_pop(CommandType.C_PUSH,"constant",0)
 
+    def write_return(self):
+        code_1 = "@LCL\n" \
+                "D=M\n" \
+                "@R13\n" \
+                "M=D\n" \
+                "@5\n" \
+                "D=D-A\n" \
+                    "A=D\n" \
+                    "D=M\n" \
+                "@R14\n" \
+                "M=D\n"
+        self.output_file.write(code_1)
 
+        self.write_push_pop(CommandType.C_POP,"argument",0)
 
+        code2 = "@ARG\n" \
+                "D=M+1\n" \
+                "@SP\n" \
+                "M=D\n" \
+                "@R13\n" \
+                "M=M-1\n" \
+                "A=M\n" \
+                "D=M\n" \
+                "@THAT\n" \
+                "M=D\n" \
+                "@R13\n" \
+                "M=M-1\n" \
+                "A=M\n" \
+                "D=M\n" \
+                "@THIS\n" \
+                "M=D\n" \
+                "@R13\n" \
+                "M=M-1\n" \
+                "A=M\n" \
+                "D=M\n" \
+                "@ARG\n" \
+                "M=D\n" \
+                "@R13\n" \
+                "M=M-1\n" \
+                "A=M\n" \
+                "D=M\n" \
+                "@LCL\n" \
+                "M=D\n" \
+                "@R13\n" \
+                "M=M-1\n" \
+                "A=M\n" \
+                "D=M\n" \
+                "@R14\n" \
+                "A=M\n" \
+                "0;JMP\n"
+        self.output_file.write(code2)"""
