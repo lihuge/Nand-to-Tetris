@@ -56,9 +56,13 @@ def check_input():
 
 # running the function to parse commands and write the translation to an .asm file
 def parse_commands_and_write_output():
-    while parser.has_more_tokens():
+    if (parser.has_more_tokens()):
         parser.advance()
-        """instruction_type = parser.instruction_type()
+    code_writer.compile_class()
+    """while parser.has_more_tokens():
+        parser.advance()
+        token_type = parser.token_type()
+        if (token_type == TokenType.)
         if instruction_type == CommandType.C_ARITHMETIC:
             code_writer.write_arithmetic(parser.arg1())
         elif instruction_type in [CommandType.C_POP, CommandType.C_PUSH]:

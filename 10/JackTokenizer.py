@@ -19,10 +19,10 @@ PLUS = '+'
 MINUS = '-'
 ASTERISK = '*'
 SLASH = '/'
-AMPERSAND = '&'
+AMPERSAND = '&amp;'
 PIPELINE = '|'
-GREATER_THAN = '>'
-LESS_THAN = '<'
+GREATER_THAN = '&gt;'
+LESS_THAN = '&lt;'
 EQUAL = '='
 TILDA = '~'
 
@@ -94,12 +94,18 @@ class KeywordType(Enum):
     THIS = 21
 
 
+"""elif i == len(line) - 3:
+                            print(line[i] + ' ' + line[i+1] + '\n')
+                            if line[i+1] == '*' and line[i+2] == '/':
+                                print('bla')
+                                comment_zone = False"""
+
+
 class JackTokenizer:
 
     def __init__(self, file_name):
         self.next_word = 0
         self.words = []
-
         comment_zone = False
         with open(file_name) as jackFile:
             for line in jackFile:
@@ -107,23 +113,57 @@ class JackTokenizer:
                 line = line.strip().split(COMMENT_SYMBOL)[0].strip()
                 new_line = ''
                 if line:
-                    for i in range(0, len(line) - 1, 2):
-                        if line[i] == '/' and line[i+1] == '*':
-                            comment_zone = True
-                        elif line[i] == '*' and line[i+1] == '/':
-                            comment_zone = False
-                        else:
-                            if comment_zone == False:
-                                new_line += line[i] + line[i+1]
-                    if len(line) % 2 != 0 and comment_zone == False:
-                        new_line += line[-1]
+                    for i in range(len(line)):
+                        if (i != len(line) - 1):
+                            if line[i] == '/' and line[i+1] == '*':
+                                comment_zone = True
+
+                            elif line[i] == '*' and line[i+1] == '/':
+                                comment_zone = False
+                        if comment_zone == False:
+                            if (i > 0):
+                                if i != len(line) and not (line[i] == '*' and line[i+1] == '/') and not(line[i-1] == '*' and line[i] == '/'):
+                                    new_line += line[i]
+                            else:
+                                if i != len(line) and not (line[i] == '*' and line[i+1] == '/'):
+                                    new_line += line[i]
+
                     if new_line != '':
                         new_line = new_line.replace(';', ' ; ')
                         new_line = new_line.replace(',', ' , ')
                         new_line = new_line.replace('(', ' ( ')
                         new_line = new_line.replace(')', ' ) ')
-                        self.words.extend(new_line.split())
-        print(KeywordType.WHILE.name)
+                        new_line = new_line.replace('.', ' . ')
+                        new_line = new_line.replace('[', ' [ ')
+                        new_line = new_line.replace(']', ' ] ')
+                        new_line = new_line.replace('}', ' } ')
+                        new_line = new_line.replace('{', ' { ')
+                        new_line = new_line.replace('-', ' - ')
+                        new_line = new_line.replace('~', ' ~ ')
+                        new_line = new_line.replace('&', ' &amp; ')
+                        new_line = new_line.replace('<', ' &lt; ')
+                        new_line = new_line.replace('>', ' &gt; ')
+                        # new_line = new_line.replace('\\', ' &quot; ')
+
+                        new_line_splitted = new_line.split()
+                        new_words = []
+                        in_string = False
+                        build_word = ''
+                        for word in new_line_splitted:
+                            if '"' in word:
+                                if in_string == False:
+                                    in_string = True
+                                    build_word = word
+                                else:
+                                    in_string = False
+                                    build_word += ' ' + word
+                                    new_words.append(build_word)
+                            else:
+                                if in_string == False:
+                                    new_words.append(word)
+                                else:
+                                    build_word += ' ' + word
+                        self.words.extend(new_words)
 
     def has_more_tokens(self):
         if len(self.words) > self.next_word:
@@ -140,7 +180,7 @@ class JackTokenizer:
             return TokenType.KEYWORD
         elif self.current_token in SYMBOLS_LIST:
             return TokenType.SYMBOL
-        elif self.current_token.is_int():
+        elif self.is_int(self.current_token):
             return TokenType.INT_CONST
         elif self.current_token.startswith('"'):
             return TokenType.STRING_CONST
@@ -209,6 +249,9 @@ class JackTokenizer:
 
     def string_val(self):
         return self.current_token[1:-1]
+
+    def peek_next_token(self):
+        return self.words[self.next_word + 1]
 
     """def arg1(self):
         if self.token_type() == TokenType.SYMBOL:
