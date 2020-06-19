@@ -25,7 +25,7 @@ class CompilationEngine:
         self.indent_evel = 0
         # self.tokenizer = JackTokenizer('bla')
         self.tokenizer = tokenizer
-        self.in_neg = False
+        self.in_unary = False
         if more_than_one_file:
             pass
 
@@ -224,7 +224,7 @@ class CompilationEngine:
         while (self.tokenizer.current_token not in EXPRESSION_ENDING):
             if (self.tokenizer.current_token not in OPERATORS):
                 self.compile_term()
-                self.in_neg = False
+                self.in_unary = False
             elif (self.tokenizer.current_token in UNARY_OPERATORS and beginning_expression == True):
                 self.compile_term()
             else:
@@ -248,9 +248,9 @@ class CompilationEngine:
         self.__write_tag('term')
         self.indent_evel += 2
         if (self.tokenizer.current_token in UNARY_OPERATORS):
-            self.in_neg = True
+            self.in_unary = True
         else:
-            self.in_neg = False
+            self.in_unary = False
         if (self.tokenizer.token_type == TokenType.IDENTIFIER):
             in_identifier = True
         if (self.tokenizer.current_token == '('):
@@ -280,16 +280,16 @@ class CompilationEngine:
             else:  # is dot
                 self.__process(self.tokenizer.current_token)
             self.__process(self.tokenizer.current_token)
-        if (self.tokenizer.current_token in UNARY_OPERATORS and self.in_neg):
+        if (self.tokenizer.current_token in UNARY_OPERATORS and self.in_unary):
             self.compile_expression()
             self.__process(self.tokenizer.current_token)
-        if (self.in_neg == True):
+        if (self.in_unary == True):
             self.__write_tag('term')
             self.indent_evel += 2
             self.__process(self.tokenizer.current_token)
             self.indent_evel -= 2
             self.__write_tag('/term')
-            self.in_neg = False
+            self.in_unary = False
         self.indent_evel -= 2
         self.__write_tag('/term')
 
