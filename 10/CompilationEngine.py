@@ -32,9 +32,6 @@ class CompilationEngine:
             return ""
         return " " * self.indent_level
 
-    def set_file_name(self, file_name):
-        self.file_name = file_name
-
     def __write_tag(self, tag):
         self.__write_line("<{}>".format(tag))
 

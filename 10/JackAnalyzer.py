@@ -76,7 +76,6 @@ else:
         sys.exit()
     try:  # this case handles a directory
         file_name = path_name.split(BACK_SLASH)[-1]
-
         files_to_parse = []
         for root, dirs, files in os.walk(path_name):
             for file_in_folder in files:
@@ -84,21 +83,14 @@ else:
                 if check_extension == JACK_EXTENSION:
                     files_to_parse.append(file_in_folder)
         number_of_files = len(files_to_parse)
-        if number_of_files > 1:
-            code_writer = CompilationEngine(
-                path_name + BACK_SLASH + file_name, True, parser)
-        elif number_of_files == 1:
-            code_writer = CompilationEngine(
-                path_name + BACK_SLASH + file_name, False, parser)
-        else:
+        if number_of_files == 0:
             print(NO_FILES_ERROR)
             sys.exit()
         for jack_file in files_to_parse:
-
             parser = JackTokenizer(path_name + BACK_SLASH + jack_file)
-            code_writer.set_file_name(jack_file.split(DOT)[0])
+            code_writer = CompilationEngine(path_name + BACK_SLASH + jack_file.split(DOT)[0], False, parser)
             parse_commands_and_write_output()
-        code_writer.close()
+            code_writer.close()
     except IOError:
         print(FILE_WRITE_ERROR)
         sys.exit()
