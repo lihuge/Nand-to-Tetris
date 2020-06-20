@@ -2,7 +2,6 @@ import sys
 import os.path
 from os import path
 from JackTokenizer import JackTokenizer
-from JackTokenizer import TokenType
 from CompilationEngine import CompilationEngine
 
 USAGE_INSTRUCTION = 'Usage: JackAnalyzer <file.jack or directory>'
@@ -26,7 +25,7 @@ def check_input_folder():
     return None
 
 
-# Checking if arguments for program are ok and if vm file exists
+# Checking if arguments for program are ok and if file exists
 def check_input():
     if len(sys.argv) is not 2:
         print(USAGE_INSTRUCTION)  # too many/less arguments
@@ -77,6 +76,7 @@ else:
         sys.exit()
     try:  # this case handles a directory
         file_name = path_name.split(BACK_SLASH)[-1]
+
         files_to_parse = []
         for root, dirs, files in os.walk(path_name):
             for file_in_folder in files:
@@ -94,6 +94,7 @@ else:
             print(NO_FILES_ERROR)
             sys.exit()
         for jack_file in files_to_parse:
+
             parser = JackTokenizer(path_name + BACK_SLASH + jack_file)
             code_writer.set_file_name(jack_file.split(DOT)[0])
             parse_commands_and_write_output()

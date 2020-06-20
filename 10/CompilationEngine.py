@@ -1,5 +1,4 @@
 from JackTokenizer import *
-import sys
 
 XML_EXTENSION = 'xml'
 DOT = '.'
@@ -23,7 +22,6 @@ class CompilationEngine:
         self.output_file = open(file_name + DOT + XML_EXTENSION, "w")
         self.file_name = file_name.split(BACK_SLASH)[-1]
         self.indent_level = 0
-        # self.tokenizer = JackTokenizer('bla')
         self.tokenizer = tokenizer
         self.in_unary = False
         if more_than_one_file:
@@ -34,16 +32,19 @@ class CompilationEngine:
             return ""
         return " " * self.indent_level
 
+    def set_file_name(self, file_name):
+        self.file_name = file_name
+
     def __write_tag(self, tag):
         self.__write_line("<{}>".format(tag))
 
     def __write_complete_tag_and_token(self):
-        tag = self.tokenizer.get_token_type().name.lower()
+        tag = self.tokenizer.token_type().name.lower()
         token = self.tokenizer.current_token
 
-        if self.tokenizer.get_token_type() == TokenType.INT_CONST:
+        if self.tokenizer.token_type() == TokenType.INT_CONST:
             tag = 'integerConstant'
-        if self.tokenizer.get_token_type() == TokenType.STRING_CONST:
+        if self.tokenizer.token_type() == TokenType.STRING_CONST:
             tag = 'stringConstant'
             token = self.tokenizer.string_val()
         self.__write_line("<{}> {} </{}>".format(tag, token, tag))
@@ -137,7 +138,7 @@ class CompilationEngine:
     def compile_statements(self):
         self.__write_tag('statements')
         self.indent_level += 2
-        while (self.tokenizer.current_token != '}'):
+        while self.tokenizer.current_token != '}':
             if self.tokenizer.current_token == LET:
                 self.compile_let()
             elif self.tokenizer.current_token == IF:
@@ -156,7 +157,7 @@ class CompilationEngine:
         self.indent_level += 2
         self.__process(LET)
         self.__process(self.tokenizer.current_token)
-        if (self.tokenizer.current_token == '['):
+        if self.tokenizer.current_token == '[':
             self.__process(self.tokenizer.current_token)
             self.compile_expression()
             self.__process(self.tokenizer.current_token)
@@ -176,7 +177,7 @@ class CompilationEngine:
         self.__process('{')
         self.compile_statements()
         self.__process('}')
-        if (self.tokenizer.current_token == ELSE):
+        if self.tokenizer.current_token == ELSE:
             self.__process('else')
             self.__process('{')
             self.compile_statements()
@@ -201,8 +202,8 @@ class CompilationEngine:
         self.__write_tag('doStatement')
         self.indent_level += 2
         self.__process('do')
-        while (self.tokenizer.current_token != ';'):
-            if (self.tokenizer.current_token == '('):
+        while self.tokenizer.current_token != ';':
+            if self.tokenizer.current_token == '(':
                 self.__process(self.tokenizer.current_token)
                 self.compile_expression_list()
             self.__process(self.tokenizer.current_token)
@@ -214,7 +215,7 @@ class CompilationEngine:
         self.__write_tag('returnStatement')
         self.indent_level += 2
         self.__process(RETURN)
-        while (self.tokenizer.current_token != ';'):
+        while self.tokenizer.current_token != ';':
             self.compile_expression()
         self.__process(SEMICOLON)
         self.indent_level -= 2
@@ -224,11 +225,11 @@ class CompilationEngine:
         self.__write_tag('expression')
         self.indent_level += 2
         beginning_expression = True
-        while (self.tokenizer.current_token not in EXPRESSION_ENDING):
-            if (self.tokenizer.current_token not in OPERATORS):
+        while self.tokenizer.current_token not in EXPRESSION_ENDING:
+            if self.tokenizer.current_token not in OPERATORS:
                 self.compile_term()
                 self.in_unary = False
-            elif (self.tokenizer.current_token in UNARY_OPERATORS and beginning_expression == True):
+            elif self.tokenizer.current_token in UNARY_OPERATORS and beginning_expression is True:
                 self.compile_term()
             else:
                 self.__process(self.tokenizer.current_token)
@@ -247,46 +248,36 @@ class CompilationEngine:
         self.__write_tag('/expressionList')
 
     def compile_term(self):
-        in_identifier = False
         self.__write_tag('term')
         self.indent_level += 2
-        if (self.tokenizer.current_token in UNARY_OPERATORS):
+        if self.tokenizer.current_token in UNARY_OPERATORS:
             self.in_unary = True
         else:
             self.in_unary = False
-        if (self.tokenizer.get_token_type == TokenType.IDENTIFIER):
-            in_identifier = True
-        if (self.tokenizer.current_token == '('):
+        if self.tokenizer.current_token == '(':
             self.__process(self.tokenizer.current_token)
             self.compile_expression()
             self.__process(self.tokenizer.current_token)
         else:
-            if (self.tokenizer.current_token == '~'):
+            if self.tokenizer.current_token == '~':
                 self.__process(self.tokenizer.current_token)
                 self.compile_term()
             else:
                 self.__process(self.tokenizer.current_token)
         while self.tokenizer.current_token in TERM_ENDING:
-            if (self.tokenizer.get_token_type == TokenType.IDENTIFIER):
-                in_identifier = True
-            if (self.tokenizer.current_token == '['):
+            if self.tokenizer.current_token == '[':
                 self.__process(self.tokenizer.current_token)
                 self.compile_expression()
-            elif (self.tokenizer.current_token == '('):
-                # if (in_identifier == True):
+            elif self.tokenizer.current_token == '(':
                 self.__process(self.tokenizer.current_token)
                 self.compile_expression_list()
-                in_identifier = False
-                # else:
-                #    self.compile_expression()
-                # self.__process(self.tokenizer.current_token)
             else:  # is dot
                 self.__process(self.tokenizer.current_token)
             self.__process(self.tokenizer.current_token)
-        if (self.tokenizer.current_token in UNARY_OPERATORS and self.in_unary):
+        if self.tokenizer.current_token in UNARY_OPERATORS and self.in_unary:
             self.compile_expression()
             self.__process(self.tokenizer.current_token)
-        if (self.in_unary == True):
+        if self.in_unary is True:
             self.__write_tag('term')
             self.indent_level += 2
             self.__process(self.tokenizer.current_token)

@@ -92,13 +92,6 @@ class KeywordType(Enum):
     THIS = 21
 
 
-"""elif i == len(line) - 3:
-                            print(line[i] + ' ' + line[i+1] + '\n')
-                            if line[i+1] == '*' and line[i+2] == '/':
-                                print('bla')
-                                comment_zone = False"""
-
-
 class JackTokenizer:
 
     def __init__(self, file_name):
@@ -172,7 +165,7 @@ class JackTokenizer:
         self.current_token = self.words[self.next_word]
         self.next_word += 1
 
-    def get_token_type(self):
+    def token_type(self):
         if self.current_token in KEYWORDS_LIST:
             return TokenType.KEYWORD
         elif self.current_token in SYMBOLS_LIST:
