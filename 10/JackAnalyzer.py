@@ -54,40 +54,11 @@ def check_input():
     return None
 
 
-# running the function to parse commands and write the translation to an .asm file
+# running the function to parse commands and write the translation to an .xml file
 def parse_commands_and_write_output():
-    if (parser.has_more_tokens()):
+    if parser.has_more_tokens():
         parser.advance()
     code_writer.compile_class()
-    """while parser.has_more_tokens():
-        parser.advance()
-        token_type = parser.token_type()
-        if (token_type == TokenType.)
-        if instruction_type == CommandType.C_ARITHMETIC:
-            code_writer.write_arithmetic(parser.arg1())
-        elif instruction_type in [CommandType.C_POP, CommandType.C_PUSH]:
-            segment = parser.arg1()
-            index = int(parser.arg2())
-            code_writer.write_push_pop(instruction_type, segment, index)
-        elif instruction_type == CommandType.C_LABEL:
-            label_name = parser.arg1()
-            code_writer.write_label(label_name)
-        elif instruction_type == CommandType.C_GOTO:
-            label_jump = parser.arg1()
-            code_writer.write_goto(label_jump)
-        elif instruction_type == CommandType.C_IF:
-            label_condition = parser.arg1()
-            code_writer.write_if(label_condition)
-        elif instruction_type == CommandType.C_FUNCTION:
-            function_name = parser.arg1()
-            number_of_vars = int(parser.arg2())
-            code_writer.write_function(function_name, number_of_vars)
-        elif instruction_type == CommandType.C_RETURN:
-            code_writer.write_return()
-        elif instruction_type == CommandType.C_CALL:
-            function_name = parser.arg1()
-            number_of_args = int(parser.arg2())
-            code_writer.write_call(function_name, number_of_args)"""
 
 
 file_name = check_input()

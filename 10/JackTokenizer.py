@@ -5,7 +5,6 @@ WHITE_SPACE = ' '
 EMPTY_STRING = ''
 EQUAL_SIGN = '='
 
-
 CURLY_OPEN = '{'
 CURLY_CLOSE = '}'
 PARENTHESES_OPEN = '('
@@ -30,7 +29,6 @@ SYMBOLS_LIST = {CURLY_OPEN, CURLY_CLOSE, PARENTHESES_OPEN, PARENTHESES_CLOSE,
                 SQUARE_BRACKETS_OPEN, SQUARE_BRACKETS_CLOSE, DOT, COMMA,
                 SEMICOLON, PLUS, MINUS, ASTERISK, SLASH, AMPERSAND, PIPELINE,
                 GREATER_THAN, LESS_THAN, EQUAL, TILDA}
-
 
 CLASS = 'class'
 METHOD = 'method'
@@ -114,18 +112,18 @@ class JackTokenizer:
                 new_line = ''
                 if line:
                     for i in range(len(line)):
-                        if (i != len(line) - 1):
-                            if line[i] == '/' and line[i+1] == '*':
+                        if i != len(line) - 1:
+                            if line[i] == '/' and line[i + 1] == '*':
                                 comment_zone = True
-
-                            elif line[i] == '*' and line[i+1] == '/':
+                            elif line[i] == '*' and line[i + 1] == '/':
                                 comment_zone = False
-                        if comment_zone == False:
-                            if (i > 0):
-                                if i != len(line) and not (line[i] == '*' and line[i+1] == '/') and not(line[i-1] == '*' and line[i] == '/'):
+                        if not comment_zone:
+                            if i > 0:
+                                if i != len(line) and not (line[i] == '*' and line[i + 1] == '/') and not (
+                                        line[i - 1] == '*' and line[i] == '/'):
                                     new_line += line[i]
                             else:
-                                if i != len(line) and not (line[i] == '*' and line[i+1] == '/'):
+                                if i != len(line) and not (line[i] == '*' and line[i + 1] == '/'):
                                     new_line += line[i]
 
                     if new_line != '':
@@ -143,7 +141,6 @@ class JackTokenizer:
                         new_line = new_line.replace('&', ' &amp; ')
                         new_line = new_line.replace('<', ' &lt; ')
                         new_line = new_line.replace('>', ' &gt; ')
-                        # new_line = new_line.replace('\\', ' &quot; ')
 
                         new_line_splitted = new_line.split()
                         new_words = []
@@ -151,7 +148,7 @@ class JackTokenizer:
                         build_word = ''
                         for word in new_line_splitted:
                             if '"' in word:
-                                if in_string == False:
+                                if not in_string:
                                     in_string = True
                                     build_word = word
                                 else:
@@ -159,7 +156,7 @@ class JackTokenizer:
                                     build_word += ' ' + word
                                     new_words.append(build_word)
                             else:
-                                if in_string == False:
+                                if not in_string:
                                     new_words.append(word)
                                 else:
                                     build_word += ' ' + word
@@ -175,7 +172,7 @@ class JackTokenizer:
         self.current_token = self.words[self.next_word]
         self.next_word += 1
 
-    def token_type(self):
+    def get_token_type(self):
         if self.current_token in KEYWORDS_LIST:
             return TokenType.KEYWORD
         elif self.current_token in SYMBOLS_LIST:
@@ -253,11 +250,3 @@ class JackTokenizer:
     def peek_next_token(self):
         return self.words[self.next_word + 1]
 
-    """def arg1(self):
-        if self.token_type() == TokenType.SYMBOL:
-            return self.current_token.strip()
-        else:
-            return self.current_token.split(WHITE_SPACE)[1].strip()
-
-    def arg2(self):
-        return self.current_token.split(WHITE_SPACE)[2].strip()"""
